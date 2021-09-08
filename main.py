@@ -13,8 +13,8 @@ from colorama import Fore, Style
 import pkg_resources
 from pkg_resources import DistributionNotFound, VersionConflict
 
-from integrations.drive_integration import GoogleDriveUploader
-from integrations.slack_integration import SlackMessenger
+# from integrations.drive_integration import GoogleDriveUploader
+# from integrations.slack_integration import SlackMessenger
 from report.builder import FantasyFootballReport
 from report.logger import get_logger
 from utils.report_tools import check_for_updates, get_valid_config
@@ -285,39 +285,39 @@ if __name__ == "__main__":
         options.get("test", False))
     report_pdf = report.create_pdf_report()
 
-    upload_file_to_google_drive = config.getboolean("Drive", "google_drive_upload")
-    upload_message = ""
-    if upload_file_to_google_drive:
-        if not options.get("test", False):
-            # upload pdf to google drive
-            google_drive_uploader = GoogleDriveUploader(report_pdf, config)
-            upload_message = google_drive_uploader.upload_file()
-            logger.info(upload_message)
-        else:
-            logger.info("Test report NOT uploaded to Google Drive.")
+    # upload_file_to_google_drive = config.getboolean("Drive", "google_drive_upload")
+    # upload_message = ""
+    # if upload_file_to_google_drive:
+    #     if not options.get("test", False):
+    #         # upload pdf to google drive
+    #         google_drive_uploader = GoogleDriveUploader(report_pdf, config)
+    #         upload_message = google_drive_uploader.upload_file()
+    #         logger.info(upload_message)
+    #     else:
+    #         logger.info("Test report NOT uploaded to Google Drive.")
 
-    post_to_slack = config.getboolean("Slack", "post_to_slack")
-    if post_to_slack:
-        if not options.get("test", False):
-            # post pdf or link to pdf to slack
-            slack_messenger = SlackMessenger(config)
-            post_or_file = config.get("Slack", "post_or_file")
+    # post_to_slack = config.getboolean("Slack", "post_to_slack")
+    # if post_to_slack:
+    #     if not options.get("test", False):
+    #         # post pdf or link to pdf to slack
+    #         slack_messenger = SlackMessenger(config)
+    #         post_or_file = config.get("Slack", "post_or_file")
 
-            if post_or_file == "post":
-                # post shareable link to uploaded google drive pdf on slack
-                slack_response = slack_messenger.post_to_selected_slack_channel(upload_message)
-            elif post_or_file == "file":
-                # upload pdf report directly to slack
-                slack_response = slack_messenger.upload_file_to_selected_slack_channel(report_pdf)
-            else:
-                logger.warning(
-                    "You have configured \"config.ini\" with unsupported Slack setting: post_or_file = {0}. "
-                    "Please choose \"post\" or \"file\" and try again.".format(post_or_file))
-                sys.exit("...run aborted.")
-            if slack_response.get("ok"):
-                logger.info("Report {0} successfully posted to Slack!".format(report_pdf))
-            else:
-                logger.error("Report {0} was NOT posted to Slack with error: {1}".format(
-                    report_pdf, slack_response.get("error")))
-        else:
-            logger.info("Test report NOT posted to Slack.")
+    #         if post_or_file == "post":
+    #             # post shareable link to uploaded google drive pdf on slack
+    #             slack_response = slack_messenger.post_to_selected_slack_channel(upload_message)
+    #         elif post_or_file == "file":
+    #             # upload pdf report directly to slack
+    #             slack_response = slack_messenger.upload_file_to_selected_slack_channel(report_pdf)
+    #         else:
+    #             logger.warning(
+    #                 "You have configured \"config.ini\" with unsupported Slack setting: post_or_file = {0}. "
+    #                 "Please choose \"post\" or \"file\" and try again.".format(post_or_file))
+    #             sys.exit("...run aborted.")
+    #         if slack_response.get("ok"):
+    #             logger.info("Report {0} successfully posted to Slack!".format(report_pdf))
+    #         else:
+    #             logger.error("Report {0} was NOT posted to Slack with error: {1}".format(
+    #                 report_pdf, slack_response.get("error")))
+        # else:
+        #     logger.info("Test report NOT posted to Slack.")
