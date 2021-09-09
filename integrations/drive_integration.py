@@ -6,8 +6,8 @@ import datetime
 import logging
 import os
 
-from pydrive.auth import GoogleAuth
-from pydrive.drive import GoogleDrive
+from pydrive2.auth import GoogleAuth
+from pydrive2.drive import GoogleDrive
 
 from report.logger import get_logger
 from utils.app_config_parser import AppConfigParser

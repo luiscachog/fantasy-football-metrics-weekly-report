@@ -13,7 +13,7 @@ from colorama import Fore, Style
 import pkg_resources
 from pkg_resources import DistributionNotFound, VersionConflict
 
-# from integrations.drive_integration import GoogleDriveUploader
+from integrations.drive_integration import GoogleDriveUploader
 # from integrations.slack_integration import SlackMessenger
 from report.builder import FantasyFootballReport
 from report.logger import get_logger
@@ -285,16 +285,16 @@ if __name__ == "__main__":
         options.get("test", False))
     report_pdf = report.create_pdf_report()
 
-    # upload_file_to_google_drive = config.getboolean("Drive", "google_drive_upload")
-    # upload_message = ""
-    # if upload_file_to_google_drive:
-    #     if not options.get("test", False):
-    #         # upload pdf to google drive
-    #         google_drive_uploader = GoogleDriveUploader(report_pdf, config)
-    #         upload_message = google_drive_uploader.upload_file()
-    #         logger.info(upload_message)
-    #     else:
-    #         logger.info("Test report NOT uploaded to Google Drive.")
+    upload_file_to_google_drive = config.getboolean("Drive", "google_drive_upload")
+    upload_message = ""
+    if upload_file_to_google_drive:
+        if not options.get("test", False):
+            # upload pdf to google drive
+            google_drive_uploader = GoogleDriveUploader(report_pdf, config)
+            upload_message = google_drive_uploader.upload_file()
+            logger.info(upload_message)
+        else:
+            logger.info("Test report NOT uploaded to Google Drive.")
 
     # post_to_slack = config.getboolean("Slack", "post_to_slack")
     # if post_to_slack:
