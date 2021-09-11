@@ -423,7 +423,7 @@ class PdfGenerator(object):
                 [],
                 [
                     self.get_img(
-                        "resources/images/donate-paypal.png",
+                        "weekly-report/resources/images/donate-paypal.png",
                         hyperlink="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=VZZCNLRHH9BQS"
                     )
                 ],
@@ -432,19 +432,19 @@ class PdfGenerator(object):
             [
                 [
                     self.get_img(
-                        "resources/images/donate-bitcoin.png",
+                        "weekly-report/resources/images/donate-bitcoin.png",
                         hyperlink="https://share.trustwallet.com/ZoAkTpY1I9"
                     )
                 ],
                 [
                     self.get_img(
-                        "resources/images/donate-ethereum.png",
+                        "weekly-report/resources/images/donate-ethereum.png",
                         hyperlink="https://share.trustwallet.com/MF8YBO01I9"
                     )
                 ],
                 [
                     self.get_img(
-                        "resources/images/donate-nano.png",
+                        "weekly-report/resources/images/donate-nano.png",
                         hyperlink="https://share.trustwallet.com/bNXsMA11I9"
                     )
                 ]
@@ -452,19 +452,19 @@ class PdfGenerator(object):
             [
                 [
                     self.get_img(
-                        "resources/images/trust-wallet-btc.png",
+                        "weekly-report/resources/images/trust-wallet-btc.png",
                         hyperlink="https://share.trustwallet.com/ZoAkTpY1I9"
                     )
                 ],
                 [
                     self.get_img(
-                        "resources/images/trust-wallet-eth.png",
+                        "weekly-report/resources/images/trust-wallet-eth.png",
                         hyperlink="https://share.trustwallet.com/MF8YBO01I9"
                     )
                 ],
                 [
                     self.get_img(
-                        "resources/images/trust-wallet-nano.png",
+                        "weekly-report/resources/images/trust-wallet-nano.png",
                         hyperlink="https://share.trustwallet.com/bNXsMA11I9"
                     )
                 ]
@@ -1176,7 +1176,7 @@ class PdfGenerator(object):
             Paragraph(
                 "Enjoying the app? Please consider donating to support its development:", self.text_style_italics),
             self.get_img(
-                "resources/images/donate.png",
+                "weekly-report/resources/images/donate.png",
                 hyperlink="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=VZZCNLRHH9BQS"
             )
         ]]
