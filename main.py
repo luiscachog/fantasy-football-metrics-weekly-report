@@ -293,6 +293,12 @@ if __name__ == "__main__":
             google_drive_uploader = GoogleDriveUploader(report_pdf, config)
             upload_message = google_drive_uploader.upload_file()
             logger.info(upload_message)
+            upload_message_file_path = os.path.join(config.get("Configuration", "data_dir"), "gdrive_message.txt")
+            logger.info(upload_message_file_path)
+            with open( upload_message_file_path, 'w') as f:
+                f.write(upload_message)
+                logger.info("GDrive Message file was created: " + upload_message_file_path)
+
         else:
             logger.info("Test report NOT uploaded to Google Drive.")
 
