@@ -16,7 +16,6 @@ DEFAULTSECT = "DEFAULT"
 
 
 class AppConfigParser(ConfigParser):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -51,13 +50,17 @@ class AppConfigParser(ConfigParser):
         except KeyError:
 
             if fallback is _UNSET:
-                if section == "Report" and \
-                        (str(option).startswith("league") or
-                         str(option).startswith("report") or
-                         str(option).startswith("team")):
+                if section == "Report" and (
+                    str(option).startswith("league")
+                    or str(option).startswith("report")
+                    or str(option).startswith("team")
+                ):
                     logger.warning(
-                        "MISSING CONFIGURATION VALUE: \"{0}: {1}\"! Setting to default value of \"False\". To include "
-                        "this section, update \"config.ini\" and try again.".format(section, option))
+                        'MISSING CONFIGURATION VALUE: "{0}: {1}"! Setting to default value of "False". To include '
+                        'this section, update "config.ini" and try again.'.format(
+                            section, option
+                        )
+                    )
                     return "False"
                 else:
                     raise NoOptionError(option, section)
@@ -67,7 +70,9 @@ class AppConfigParser(ConfigParser):
         if raw or value is None:
             return value
         else:
-            return self._interpolation.before_get(self, section, option, value, d)
+            return self._interpolation.before_get(
+                self, section, option, value, d
+            )
 
     def read(self, filenames, encoding=None):
         """Read and parse a filename or an iterable of filenames.
@@ -100,7 +105,9 @@ class AppConfigParser(ConfigParser):
                             else:
                                 if "=" in line:
                                     key = line.split("=")[0].strip()
-                                    self.comment_map[section][key] = key_comments
+                                    self.comment_map[section][
+                                        key
+                                    ] = key_comments
                                     key_comments = []
                     fp.seek(0)
                     self._read(fp, filename)
@@ -117,9 +124,11 @@ class AppConfigParser(ConfigParser):
         section_comments_map = self.comment_map.get(section_name)
 
         for key, value in section_items:
-            value = self._interpolation.before_write(self, section_name, key, value)
+            value = self._interpolation.before_write(
+                self, section_name, key, value
+            )
             if value is not None or not self._allow_no_value:
-                value = delimiter + str(value).replace('\n', '\n\t')
+                value = delimiter + str(value).replace("\n", "\n\t")
             else:
                 value = ""
 

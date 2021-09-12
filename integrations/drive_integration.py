@@ -17,15 +17,21 @@ logger = get_logger(__name__, propagate=False)
 # Suppress verbose googleapiclient info/warning logging
 logging.getLogger("googleapiclient").setLevel(level=logging.ERROR)
 logging.getLogger("googleapiclient.discovery").setLevel(level=logging.ERROR)
-logging.getLogger("googleapiclient.discovery_cache").setLevel(level=logging.ERROR)
-logging.getLogger("googleapiclient.discovery_cache.file_cache").setLevel(level=logging.ERROR)
+logging.getLogger("googleapiclient.discovery_cache").setLevel(
+    level=logging.ERROR
+)
+logging.getLogger("googleapiclient.discovery_cache.file_cache").setLevel(
+    level=logging.ERROR
+)
 
 
 class GoogleDriveUploader(object):
     def __init__(self, filename, config):
         logger.debug("Initializing Google Drive uploader.")
 
-        project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        project_dir = os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))
+        )
 
         logger.debug("Authenticating with Google Drive.")
 
@@ -33,7 +39,9 @@ class GoogleDriveUploader(object):
         self.config = config
         self.gauth = GoogleAuth()
 
-        auth_token = os.path.join(project_dir, self.config.get("Drive", "google_drive_auth_token"))
+        auth_token = os.path.join(
+            project_dir, self.config.get("Drive", "google_drive_auth_token")
+        )
 
         # Try to load saved client credentials
         self.gauth.LoadCredentialsFile(auth_token)
@@ -57,17 +65,31 @@ class GoogleDriveUploader(object):
 
         # Get lists of folders
         root_folders = drive.ListFile(
-            {"q": "'root' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"}).GetList()
-        all_folders = drive.ListFile({"q": "mimeType='application/vnd.google-apps.folder' and trashed=false"}).GetList()
-        all_pdfs = drive.ListFile({"q": "mimeType='application/pdf' and trashed=false"}).GetList()
+            {
+                "q": "'root' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false"
+            }
+        ).GetList()
+        all_folders = drive.ListFile(
+            {
+                "q": "mimeType='application/vnd.google-apps.folder' and trashed=false"
+            }
+        ).GetList()
+        all_pdfs = drive.ListFile(
+            {"q": "mimeType='application/pdf' and trashed=false"}
+        ).GetList()
 
         # Check for "Fantasy_Football" root folder and create it if it does not exist
         google_drive_root_folder_name = self.config.get(
-            "Drive", "google_drive_root_folder_name", fallback="Fantasy_Football")
+            "Drive",
+            "google_drive_root_folder_name",
+            fallback="Fantasy_Football",
+        )
         google_drive_root_folder_id = self.make_root_folder(
             drive,
-            self.check_file_existence(google_drive_root_folder_name, root_folders, "root"),
-            google_drive_root_folder_name
+            self.check_file_existence(
+                google_drive_root_folder_name, root_folders, "root"
+            ),
+            google_drive_root_folder_name,
         )
 
         if not test:
@@ -80,25 +102,36 @@ class GoogleDriveUploader(object):
                 self.check_file_existence(
                     season_folder_name,
                     all_folders,
-                    google_drive_root_folder_id
+                    google_drive_root_folder_id,
                 ),
                 season_folder_name,
-                google_drive_root_folder_id
+                google_drive_root_folder_id,
             )
 
             # Check for league folder and create it if it does not exist
             # noinspection PyTypeChecker
-            league_folder_name = self.filename.split(os.sep)[-2].replace("-", "_")
-            league_folder_id = self.make_parent_folder(drive,
-                                                       self.check_file_existence(league_folder_name, all_folders, season_folder_id),
-                                                       league_folder_name, season_folder_id)
+            league_folder_name = self.filename.split(os.sep)[-2].replace(
+                "-", "_"
+            )
+            league_folder_id = self.make_parent_folder(
+                drive,
+                self.check_file_existence(
+                    league_folder_name, all_folders, season_folder_id
+                ),
+                league_folder_name,
+                season_folder_id,
+            )
 
             # Check for league report and create if if it does not exist
             report_file_name = self.filename.split(os.sep)[-1]
-            report_file = self.check_file_existence(report_file_name, all_pdfs, league_folder_id)
+            report_file = self.check_file_existence(
+                report_file_name, all_pdfs, league_folder_id
+            )
         else:
             report_file_name = self.filename
-            report_file = self.check_file_existence(report_file_name, all_pdfs, "root")
+            report_file = self.check_file_existence(
+                report_file_name, all_pdfs, "root"
+            )
             league_folder_id = "root"
 
         if report_file:
@@ -108,11 +141,8 @@ class GoogleDriveUploader(object):
                 "title": report_file_name,
                 "mimeType": "application/pdf",
                 "parents": [
-                    {
-                        "kind": "drive#fileLink",
-                        "id": league_folder_id
-                    }
-                ]
+                    {"kind": "drive#fileLink", "id": league_folder_id}
+                ],
             }
         )
         upload_file.SetContentFile(self.filename)
@@ -121,15 +151,17 @@ class GoogleDriveUploader(object):
         upload_file.Upload()
 
         upload_file.InsertPermission(
-            {
-                "type": "anyone",
-                "role": "reader",
-                "withLink": True
-            }
+            {"type": "anyone", "role": "reader", "withLink": True}
         )
 
-        return "\nFantasy Football Report\nGenerated %s\n*%s*\n\n_Google Drive Link:_\n%s" % (
-            "{:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()), upload_file['title'], upload_file["alternateLink"])
+        return (
+            "\nFantasy Football Report\nGenerated %s\n*%s*\n\n_Google Drive Link:_\n%s"
+            % (
+                "{:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()),
+                upload_file["title"],
+                upload_file["alternateLink"],
+            )
+        )
 
     @staticmethod
     def check_file_existence(file_name, file_list, parent_id):
@@ -139,7 +171,10 @@ class GoogleDriveUploader(object):
         for drive_file in file_list:
             if drive_file["title"] == drive_file_name:
                 for parent_folder in drive_file["parents"]:
-                    if parent_folder["id"] == parent_id or parent_folder["isRoot"]:
+                    if (
+                        parent_folder["id"] == parent_id
+                        or parent_folder["isRoot"]
+                    ):
                         google_drive_file = drive_file
 
         return google_drive_file
@@ -154,10 +189,10 @@ class GoogleDriveUploader(object):
                         {
                             "kind": "drive#fileLink",
                             "isRoot": True,
-                            "id": "root"
+                            "id": "root",
                         }
                     ],
-                    "mimeType": "application/vnd.google-apps.folder"
+                    "mimeType": "application/vnd.google-apps.folder",
                 }
             )
             new_root_folder.Upload()
@@ -174,12 +209,9 @@ class GoogleDriveUploader(object):
                 {
                     "title": folder_name,
                     "parents": [
-                        {
-                            "kind": "drive#fileLink",
-                            "id": parent_folder_id
-                        }
+                        {"kind": "drive#fileLink", "id": parent_folder_id}
                     ],
-                    "mimeType": "application/vnd.google-apps.folder"
+                    "mimeType": "application/vnd.google-apps.folder",
                 }
             )
             new_parent_folder.Upload()
@@ -192,7 +224,12 @@ class GoogleDriveUploader(object):
 
 if __name__ == "__main__":
     local_config = AppConfigParser()
-    local_config.read(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.ini"))
+    local_config.read(
+        os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "config.ini",
+        )
+    )
     reupload_file = local_config.get("Drive", "google_drive_reupload_file")
 
     google_drive_uploader = GoogleDriveUploader(reupload_file, local_config)

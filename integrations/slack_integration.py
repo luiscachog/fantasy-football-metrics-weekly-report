@@ -23,13 +23,17 @@ class SlackMessenger(object):
     def __init__(self, config):
         logger.debug("Initializing Slack messenger.")
 
-        self.project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.project_dir = os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__))
+        )
 
         self.config = config  # type: AppConfigParser
 
         logger.debug("Authenticating with Slack.")
 
-        auth_token = os.path.join(self.project_dir, self.config.get("Slack", "slack_auth_token"))
+        auth_token = os.path.join(
+            self.project_dir, self.config.get("Slack", "slack_auth_token")
+        )
 
         with open(auth_token, "r") as token_file:
             # more information at https://api.slack.com/web#authentication
@@ -45,11 +49,12 @@ class SlackMessenger(object):
             logger.error("Slack client error: %s", e)
 
     def list_channels(self):
-        """Required Slack app scopes: channels:read, groups:read, mpim:read, im:read
-        """
+        """Required Slack app scopes: channels:read, groups:read, mpim:read, im:read"""
         logger.debug("Listing Slack channels.")
         try:
-            return self.sc.conversations_list(types="public_channel,private_channel")
+            return self.sc.conversations_list(
+                types="public_channel,private_channel"
+            )
         except SlackApiError as e:
             logger.error("Slack client error: %s", e)
 
@@ -62,7 +67,11 @@ class SlackMessenger(object):
         logger.debug("Testing message posting to Slack.")
 
         try:
-            logger.info(self.sc.conversations_info(channel=self.get_channel_id("apitest")))
+            logger.info(
+                self.sc.conversations_info(
+                    channel=self.get_channel_id("apitest")
+                )
+            )
 
             self.sc.chat_postMessage(
                 channel=self.get_channel_id("apitest"),
@@ -79,7 +88,11 @@ class SlackMessenger(object):
         logger.debug("Testing message posting to private Slack channels.")
 
         try:
-            logger.info(self.sc.conversations_info(channel=self.get_channel_id("apitest-private")))
+            logger.info(
+                self.sc.conversations_info(
+                    channel=self.get_channel_id("apitest-private")
+                )
+            )
 
             self.sc.chat_postMessage(
                 channel=self.get_channel_id("apitest-private"),
@@ -96,7 +109,11 @@ class SlackMessenger(object):
         logger.debug("Testing file uploads to Slack.")
 
         try:
-            logger.info(self.sc.conversations_info(channel=self.get_channel_id("apitest")))
+            logger.info(
+                self.sc.conversations_info(
+                    channel=self.get_channel_id("apitest")
+                )
+            )
 
             with open(upload_file, "rb") as uf:
                 file_to_upload = uf.read()
@@ -108,7 +125,7 @@ class SlackMessenger(object):
                     icon_emoji=":football:",
                     filename=upload_file,
                     filetype="pdf",
-                    file=file_to_upload
+                    file=file_to_upload,
                 )
             return response
         except SlackApiError as e:
@@ -118,7 +135,11 @@ class SlackMessenger(object):
         logger.debug("Testing file uploads to private Slack channels.")
 
         try:
-            logger.info(self.sc.conversations_info(channel=self.get_channel_id("apitest-private")))
+            logger.info(
+                self.sc.conversations_info(
+                    channel=self.get_channel_id("apitest-private")
+                )
+            )
 
             with open(upload_file, "rb") as uf:
                 file_to_upload = uf.read()
@@ -129,7 +150,7 @@ class SlackMessenger(object):
                     icon_emoji=":football:",
                     filename=upload_file,
                     filetype="pdf",
-                    file=file_to_upload
+                    file=file_to_upload,
                 )
             return response
         except SlackApiError as e:
@@ -140,7 +161,9 @@ class SlackMessenger(object):
 
         try:
             return self.sc.chat_postMessage(
-                channel=self.get_channel_id(self.config.get("Slack", "slack_channel")),
+                channel=self.get_channel_id(
+                    self.config.get("Slack", "slack_channel")
+                ),
                 text="<!here|here>\n" + message,
                 username="ff-report",
                 # icon_emoji=":football:"
@@ -156,9 +179,10 @@ class SlackMessenger(object):
             file_name = report_file_info[-1]
             file_type = file_name.split(".")[-1]
             league_name = report_file_info[-2]
-            message = "\nFantasy Football Report for %s\nGenerated %s\n" % (league_name,
-                                                                            "{:%Y-%b-%d %H:%M:%S}".format(
-                                                                                datetime.datetime.now()))
+            message = "\nFantasy Football Report for %s\nGenerated %s\n" % (
+                league_name,
+                "{:%Y-%b-%d %H:%M:%S}".format(datetime.datetime.now()),
+            )
 
             upload_file = os.path.join(self.project_dir, upload_file)
             with open(upload_file, "rb") as uf:
@@ -170,12 +194,14 @@ class SlackMessenger(object):
                 file_to_upload = uf.read()
                 # noinspection PyTypeChecker
                 response = self.sc.files_upload(
-                    channels=self.get_channel_id(self.config.get("Slack", "slack_channel")),
+                    channels=self.get_channel_id(
+                        self.config.get("Slack", "slack_channel")
+                    ),
                     filename=file_name,
                     filetype=file_type,
                     file=file_to_upload,
                     title=file_name,
-                    initial_comment=message
+                    initial_comment=message,
                 )
             return response
         except SlackApiError as e:
@@ -184,9 +210,16 @@ class SlackMessenger(object):
 
 if __name__ == "__main__":
     local_config = AppConfigParser()
-    local_config.read(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config.ini"))
-    repost_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                               local_config.get("Slack", "repost_file"))
+    local_config.read(
+        os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+            "config.ini",
+        )
+    )
+    repost_file = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        local_config.get("Slack", "repost_file"),
+    )
 
     post_to_slack = SlackMessenger(local_config)
 

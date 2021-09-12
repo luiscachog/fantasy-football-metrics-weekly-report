@@ -18,14 +18,28 @@ logger = get_logger(__name__, propagate=False)
 
 
 class PlayoffProbabilities(object):
-
-    def __init__(self, config, simulations, num_weeks, num_playoff_slots, data_dir, num_divisions=0, save_data=False,
-                 recalculate=False, dev_offline=False):
+    def __init__(
+        self,
+        config,
+        simulations,
+        num_weeks,
+        num_playoff_slots,
+        data_dir,
+        num_divisions=0,
+        save_data=False,
+        recalculate=False,
+        dev_offline=False,
+    ):
         logger.debug("Initializing playoff probabilities.")
 
         self.config = config
-        self.simulations = int(simulations) if simulations is not None else self.config.getint(
-            "Settings", "num_playoff_simulations", fallback=100000)
+        self.simulations = (
+            int(simulations)
+            if simulations is not None
+            else self.config.getint(
+                "Settings", "num_playoff_simulations", fallback=100000
+            )
+        )
         self.num_weeks = int(num_weeks)
         self.num_playoff_slots = int(num_playoff_slots)
         self.data_dir = data_dir
@@ -55,14 +69,19 @@ class PlayoffProbabilities(object):
                 int(team.record.get_division_wins()),
                 int(team.record.get_division_losses()),
                 int(team.record.get_division_ties()),
-                float(team.record.get_division_points_for())
+                float(team.record.get_division_points_for()),
             )
 
         try:
             if int(week) == int(week_for_report):
                 if self.recalculate:
-                    logger.info("Running %s Monte Carlo playoff simulation%s..." % ("{0:,}".format(
-                        self.simulations), ("s" if self.simulations > 1 else "")))
+                    logger.info(
+                        "Running %s Monte Carlo playoff simulation%s..."
+                        % (
+                            "{0:,}".format(self.simulations),
+                            ("s" if self.simulations > 1 else ""),
+                        )
+                    )
 
                     begin = datetime.datetime.now()
                     avg_wins = [0.0] * self.num_playoff_slots
@@ -79,22 +98,40 @@ class PlayoffProbabilities(object):
                                     team_1.add_win()
                                     team_2.add_loss()
                                     if self.num_divisions > 0:
-                                        if team_1.division and team_2.division and team_1.division == team_2.division:
+                                        if (
+                                            team_1.division
+                                            and team_2.division
+                                            and team_1.division
+                                            == team_2.division
+                                        ):
                                             team_1.add_division_win()
                                             team_2.add_division_loss()
                                 else:
                                     team_2.add_win()
                                     team_1.add_loss()
                                     if self.num_divisions > 0:
-                                        if team_1.division and team_2.division and team_1.division == team_2.division:
+                                        if (
+                                            team_1.division
+                                            and team_2.division
+                                            and team_1.division
+                                            == team_2.division
+                                        ):
                                             team_2.add_division_win()
                                             team_1.add_division_loss()
 
                         if self.num_divisions > 0:
-                            sorted_divisions = self.group_by_division(teams_for_playoff_probs)
+                            sorted_divisions = self.group_by_division(
+                                teams_for_playoff_probs
+                            )
 
-                            num_playoff_slots_per_division_without_leader = self.config.getint(
-                                "Settings", "num_playoff_slots_per_division", fallback=1) - 1
+                            num_playoff_slots_per_division_without_leader = (
+                                self.config.getint(
+                                    "Settings",
+                                    "num_playoff_slots_per_division",
+                                    fallback=1,
+                                )
+                                - 1
+                            )
 
                             # pick the teams making the playoffs
                             division_winners = []
@@ -103,117 +140,234 @@ class PlayoffProbabilities(object):
                             for division in sorted_divisions.values():
                                 division_winners.append(division[0])
 
-                                div_qual_count = deepcopy(num_playoff_slots_per_division_without_leader)
+                                div_qual_count = deepcopy(
+                                    num_playoff_slots_per_division_without_leader
+                                )
                                 for remaining_team in division[1:]:
                                     if div_qual_count > 0:
-                                        division_qualifiers.append(remaining_team)
+                                        division_qualifiers.append(
+                                            remaining_team
+                                        )
                                     else:
                                         remaining_teams.append(remaining_team)
                                     div_qual_count -= 1
 
                             division_winners = sorted(
-                                division_winners, key=lambda x: x.get_wins_with_points(), reverse=True)
+                                division_winners,
+                                key=lambda x: x.get_wins_with_points(),
+                                reverse=True,
+                            )
                             division_qualifiers = sorted(
-                                division_qualifiers, key=lambda x: x.get_wins_with_points(), reverse=True)
+                                division_qualifiers,
+                                key=lambda x: x.get_wins_with_points(),
+                                reverse=True,
+                            )
                             remaining_teams = sorted(
-                                remaining_teams, key=lambda x: x.get_wins_with_points(), reverse=True)
+                                remaining_teams,
+                                key=lambda x: x.get_wins_with_points(),
+                                reverse=True,
+                            )
 
                             playoff_count = 1
                             for team in division_winners:
-                                teams_for_playoff_probs[division_winners[playoff_count - 1].team_id].add_playoff_tally()
-                                avg_wins[playoff_count - 1] += \
-                                    round(division_winners[playoff_count - 1].get_wins_with_points(), 0)
-                                teams_for_playoff_probs[team.team_id].add_playoff_stats(playoff_count)
-                                teams_for_playoff_probs[team.team_id].add_division_leader_tally()
+                                teams_for_playoff_probs[
+                                    division_winners[playoff_count - 1].team_id
+                                ].add_playoff_tally()
+                                avg_wins[playoff_count - 1] += round(
+                                    division_winners[
+                                        playoff_count - 1
+                                    ].get_wins_with_points(),
+                                    0,
+                                )
+                                teams_for_playoff_probs[
+                                    team.team_id
+                                ].add_playoff_stats(playoff_count)
+                                teams_for_playoff_probs[
+                                    team.team_id
+                                ].add_division_leader_tally()
                                 playoff_count += 1
 
-                            if (len(division_winners) < self.num_playoff_slots) and (len(division_qualifiers) > 0):
-                                if len(division_qualifiers) <= (self.num_playoff_slots - len(division_winners)):
+                            if (
+                                len(division_winners) < self.num_playoff_slots
+                            ) and (len(division_qualifiers) > 0):
+                                if len(division_qualifiers) <= (
+                                    self.num_playoff_slots
+                                    - len(division_winners)
+                                ):
                                     remaining_playoff_count = 1
-                                    for division_qualifier_count in range(1, len(division_qualifiers) + 1):
-                                        teams_for_playoff_probs[division_qualifiers[
-                                            remaining_playoff_count - 1].team_id].add_playoff_tally()
-                                        avg_wins[
-                                            len(division_winners) + remaining_playoff_count - 1] += \
-                                            round(division_qualifiers[
-                                                      remaining_playoff_count - 1].get_wins_with_points(), 0)
-                                        teams_for_playoff_probs[
-                                            division_qualifiers[remaining_playoff_count - 1].team_id].add_playoff_stats(
-                                            len(division_winners) + remaining_playoff_count)
+                                    for division_qualifier_count in range(
+                                        1, len(division_qualifiers) + 1
+                                    ):
                                         teams_for_playoff_probs[
                                             division_qualifiers[
-                                                remaining_playoff_count - 1].team_id].add_division_qualifier_tally()
+                                                remaining_playoff_count - 1
+                                            ].team_id
+                                        ].add_playoff_tally()
+                                        avg_wins[
+                                            len(division_winners)
+                                            + remaining_playoff_count
+                                            - 1
+                                        ] += round(
+                                            division_qualifiers[
+                                                remaining_playoff_count - 1
+                                            ].get_wins_with_points(),
+                                            0,
+                                        )
+                                        teams_for_playoff_probs[
+                                            division_qualifiers[
+                                                remaining_playoff_count - 1
+                                            ].team_id
+                                        ].add_playoff_stats(
+                                            len(division_winners)
+                                            + remaining_playoff_count
+                                        )
+                                        teams_for_playoff_probs[
+                                            division_qualifiers[
+                                                remaining_playoff_count - 1
+                                            ].team_id
+                                        ].add_division_qualifier_tally()
                                         remaining_playoff_count += 1
                                 else:
-                                    raise ValueError("Specified number of playoff qualifiers per division ({0}) exceeds"
-                                                     " available league playoff spots. Please correct the value of "
-                                                     "\"num_playoff_slots_per_division\" in \"config.ini\".".format(
-                                                        num_playoff_slots_per_division_without_leader + 1))
+                                    raise ValueError(
+                                        "Specified number of playoff qualifiers per division ({0}) exceeds"
+                                        " available league playoff spots. Please correct the value of "
+                                        '"num_playoff_slots_per_division" in "config.ini".'.format(
+                                            num_playoff_slots_per_division_without_leader
+                                            + 1
+                                        )
+                                    )
 
-                            if (len(division_winners) + len(division_qualifiers)) < self.num_playoff_slots:
+                            if (
+                                len(division_winners)
+                                + len(division_qualifiers)
+                            ) < self.num_playoff_slots:
                                 remaining_playoff_count = 1
-                                while remaining_playoff_count <= \
-                                        (self.num_playoff_slots - len(division_winners) - len(division_qualifiers)):
-                                    teams_for_playoff_probs[remaining_teams[
-                                        remaining_playoff_count - 1].team_id].add_playoff_tally()
-                                    avg_wins[len(division_winners) + len(division_qualifiers) +
-                                             remaining_playoff_count - 1] += \
-                                        round(remaining_teams[remaining_playoff_count - 1].get_wins_with_points(), 0)
+                                while remaining_playoff_count <= (
+                                    self.num_playoff_slots
+                                    - len(division_winners)
+                                    - len(division_qualifiers)
+                                ):
                                     teams_for_playoff_probs[
-                                        remaining_teams[remaining_playoff_count - 1].team_id].add_playoff_stats(
-                                        len(division_winners) + len(division_qualifiers) + remaining_playoff_count)
+                                        remaining_teams[
+                                            remaining_playoff_count - 1
+                                        ].team_id
+                                    ].add_playoff_tally()
+                                    avg_wins[
+                                        len(division_winners)
+                                        + len(division_qualifiers)
+                                        + remaining_playoff_count
+                                        - 1
+                                    ] += round(
+                                        remaining_teams[
+                                            remaining_playoff_count - 1
+                                        ].get_wins_with_points(),
+                                        0,
+                                    )
+                                    teams_for_playoff_probs[
+                                        remaining_teams[
+                                            remaining_playoff_count - 1
+                                        ].team_id
+                                    ].add_playoff_stats(
+                                        len(division_winners)
+                                        + len(division_qualifiers)
+                                        + remaining_playoff_count
+                                    )
                                     remaining_playoff_count += 1
 
                         else:
                             # sort the teams
                             sorted_teams = sorted(
-                                teams_for_playoff_probs.values(), key=lambda x: x.get_wins_with_points(), reverse=True)
+                                teams_for_playoff_probs.values(),
+                                key=lambda x: x.get_wins_with_points(),
+                                reverse=True,
+                            )
 
                             # pick the teams making the playoffs
                             playoff_count = 1
                             while playoff_count <= self.num_playoff_slots:
-                                teams_for_playoff_probs[sorted_teams[playoff_count - 1].team_id].add_playoff_tally()
-                                avg_wins[playoff_count - 1] += \
-                                    round(sorted_teams[playoff_count - 1].get_wins_with_points(), 0)
-                                teams_for_playoff_probs[sorted_teams[playoff_count - 1].team_id].add_playoff_stats(
-                                    playoff_count)
+                                teams_for_playoff_probs[
+                                    sorted_teams[playoff_count - 1].team_id
+                                ].add_playoff_tally()
+                                avg_wins[playoff_count - 1] += round(
+                                    sorted_teams[
+                                        playoff_count - 1
+                                    ].get_wins_with_points(),
+                                    0,
+                                )
+                                teams_for_playoff_probs[
+                                    sorted_teams[playoff_count - 1].team_id
+                                ].add_playoff_stats(playoff_count)
                                 playoff_count += 1
 
-                        for team in teams_for_playoff_probs.values():  # type: TeamWithPlayoffProbs
+                        for (
+                            team
+                        ) in (
+                            teams_for_playoff_probs.values()
+                        ):  # type: TeamWithPlayoffProbs
                             team.reset_to_base_record()
 
                         sim_count += 1
 
-                    modified_team_names = {team_id: "" for team_id in teams_for_playoff_probs.keys()}
+                    modified_team_names = {
+                        team_id: ""
+                        for team_id in teams_for_playoff_probs.keys()
+                    }
                     if self.num_divisions > 0:
-                        sorted_divisions = self.group_by_division(teams_for_playoff_probs)
+                        sorted_divisions = self.group_by_division(
+                            teams_for_playoff_probs
+                        )
 
-                        num_playoff_slots_per_division_without_leader = self.config.getint(
-                            "Settings", "num_playoff_slots_per_division", fallback=1) - 1
+                        num_playoff_slots_per_division_without_leader = (
+                            self.config.getint(
+                                "Settings",
+                                "num_playoff_slots_per_division",
+                                fallback=1,
+                            )
+                            - 1
+                        )
 
                         for division in sorted_divisions.values():
                             ranked_division = sorted(
                                 division,
                                 key=lambda x: (
                                     x.division_leader_tally,
-                                    x.division_qualifier_tally
+                                    x.division_qualifier_tally,
                                 ),
-                                reverse=True
+                                reverse=True,
                             )
-                            modified_team_names[ranked_division[0].team_id] = "†"
-                            teams_for_playoff_probs[ranked_division[0].team_id].is_predicted_division_leader = True
+                            modified_team_names[
+                                ranked_division[0].team_id
+                            ] = "†"
+                            teams_for_playoff_probs[
+                                ranked_division[0].team_id
+                            ].is_predicted_division_leader = True
 
-                            division_qualifier_count = deepcopy(num_playoff_slots_per_division_without_leader)
+                            division_qualifier_count = deepcopy(
+                                num_playoff_slots_per_division_without_leader
+                            )
                             if division_qualifier_count > 0:
-                                for division_ndx in range(1, division_qualifier_count + 1):
-                                    modified_team_names[ranked_division[division_ndx].team_id] = "‡"
+                                for division_ndx in range(
+                                    1, division_qualifier_count + 1
+                                ):
+                                    modified_team_names[
+                                        ranked_division[division_ndx].team_id
+                                    ] = "‡"
                                     teams_for_playoff_probs[
-                                        ranked_division[division_ndx].team_id].is_predicted_division_qualifier = True
+                                        ranked_division[division_ndx].team_id
+                                    ].is_predicted_division_qualifier = True
 
                                     division_qualifier_count -= 1
 
-                    for team in teams_for_playoff_probs.values():  # type: TeamWithPlayoffProbs
-                        playoff_min_wins = round((avg_wins[self.num_playoff_slots - 1]) / self.simulations, 2)
+                    for (
+                        team
+                    ) in (
+                        teams_for_playoff_probs.values()
+                    ):  # type: TeamWithPlayoffProbs
+                        playoff_min_wins = round(
+                            (avg_wins[self.num_playoff_slots - 1])
+                            / self.simulations,
+                            2,
+                        )
                         if playoff_min_wins > team.wins:
                             needed_wins = np.rint(playoff_min_wins - team.wins)
                         else:
@@ -227,50 +381,83 @@ class PlayoffProbabilities(object):
                             # add value for if team was predicted division winner to pass to the later sort function
                             team.is_predicted_division_leader,
                             # add value for if team was predicted division qualifier to pass to the later sort function
-                            team.is_predicted_division_qualifier
+                            team.is_predicted_division_qualifier,
                         ]
 
                     delta = datetime.datetime.now() - begin
-                    logger.info("...ran %s playoff simulation%s in %s\n" % ("{0:,}".format(
-                        self.simulations), ("s" if self.simulations > 1 else ""), str(delta)))
+                    logger.info(
+                        "...ran %s playoff simulation%s in %s\n"
+                        % (
+                            "{0:,}".format(self.simulations),
+                            ("s" if self.simulations > 1 else ""),
+                            str(delta),
+                        )
+                    )
 
                     if self.save_data:
-                        save_dir = os.path.join(self.data_dir, "week_" + str(week_for_report))
+                        save_dir = os.path.join(
+                            self.data_dir, "week_" + str(week_for_report)
+                        )
                         if not os.path.exists(save_dir):
                             os.makedirs(save_dir)
 
-                        with open(os.path.join(save_dir, "playoff_probs_data.json"), "w") as pp_out:
-                            json.dump(self.playoff_probs_data, pp_out, ensure_ascii=False, indent=2)
+                        with open(
+                            os.path.join(save_dir, "playoff_probs_data.json"),
+                            "w",
+                        ) as pp_out:
+                            json.dump(
+                                self.playoff_probs_data,
+                                pp_out,
+                                ensure_ascii=False,
+                                indent=2,
+                            )
 
                 else:
-                    logger.info("Using saved Monte Carlo playoff simulations for playoff probabilities.")
+                    logger.info(
+                        "Using saved Monte Carlo playoff simulations for playoff probabilities."
+                    )
 
                     playoff_probs_data_file_path = os.path.join(
-                        self.data_dir, "week_" + str(week_for_report), "playoff_probs_data.json")
+                        self.data_dir,
+                        "week_" + str(week_for_report),
+                        "playoff_probs_data.json",
+                    )
                     if os.path.exists(playoff_probs_data_file_path):
                         with open(playoff_probs_data_file_path, "r") as pp_in:
                             self.playoff_probs_data = json.load(pp_in)
                     else:
                         raise FileNotFoundError(
                             "FILE {0} DOES NOT EXIST. CANNOT RUN LOCALLY WITHOUT HAVING PREVIOUSLY SAVED DATA!".format(
-                                playoff_probs_data_file_path))
+                                playoff_probs_data_file_path
+                            )
+                        )
 
                 return self.playoff_probs_data
             else:
-                logger.debug("No predicted playoff standings calculated for week {0}. The Fantasy Football Metrics "
-                             "Weekly Report application currently only supports playoff predictions when run for the "
-                             "current week.".format(week))
+                logger.debug(
+                    "No predicted playoff standings calculated for week {0}. The Fantasy Football Metrics "
+                    "Weekly Report application currently only supports playoff predictions when run for the "
+                    "current week.".format(week)
+                )
                 return None
         except Exception as e:
-            logger.error("COULDN'T CALCULATE PLAYOFF PROBS WITH EXCEPTION: {0}\n{1}".format(e, traceback.format_exc()))
+            logger.error(
+                "COULDN'T CALCULATE PLAYOFF PROBS WITH EXCEPTION: {0}\n{1}".format(
+                    e, traceback.format_exc()
+                )
+            )
             return None
 
     def group_by_division(self, teams_for_playoff_probs):
         # group teams into divisions
         division_groups = [
-            list(group) for key, group in itertools.groupby(
-                sorted(teams_for_playoff_probs.values(), key=lambda x: x.division),
-                lambda x: str(x.division))
+            list(group)
+            for key, group in itertools.groupby(
+                sorted(
+                    teams_for_playoff_probs.values(), key=lambda x: x.division
+                ),
+                lambda x: str(x.division),
+            )
         ]
 
         # sort the teams
@@ -284,9 +471,9 @@ class PlayoffProbabilities(object):
                     x.ties,
                     x.get_division_wins_with_points(),
                     -x.division_losses,
-                    x.division_ties
+                    x.division_ties,
                 ),
-                reverse=True
+                reverse=True,
             )
 
         return sorted_divisions
@@ -299,9 +486,23 @@ class PlayoffProbabilities(object):
 
 
 class TeamWithPlayoffProbs(object):
-
-    def __init__(self, team_id, name, manager, wins, losses, ties, points_for, playoff_slots, simulations,
-                 division=None, division_wins=0, division_losses=0, division_ties=0, division_points_for=0):
+    def __init__(
+        self,
+        team_id,
+        name,
+        manager,
+        wins,
+        losses,
+        ties,
+        points_for,
+        playoff_slots,
+        simulations,
+        division=None,
+        division_wins=0,
+        division_losses=0,
+        division_ties=0,
+        division_points_for=0,
+    ):
         self.team_id = team_id
         self.name = name
         self.manager = manager
@@ -366,7 +567,10 @@ class TeamWithPlayoffProbs(object):
         return round((self.playoff_tally / self.simulations) * 100.0, 2)
 
     def get_playoff_stats(self):
-        return [round((stat / self.simulations) * 100.0, 2) for stat in self.playoff_stats]
+        return [
+            round((stat / self.simulations) * 100.0, 2)
+            for stat in self.playoff_stats
+        ]
 
     def reset_to_base_record(self):
         self.wins = self.base_wins

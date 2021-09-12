@@ -17,7 +17,9 @@ if not os.path.exists(test_data_dir):
     os.makedirs(test_data_dir)
 
 config = AppConfigParser()
-config.read(os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.ini"))
+config.read(
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.ini")
+)
 
 player_first_name = "Dion"
 player_last_name = "Lewis"
@@ -28,42 +30,52 @@ player_position = "RB"
 
 def test_bad_boy_init():
     bad_boy_stats = BadBoyStats(
-        data_dir=test_data_dir,
-        save_data=True,
-        dev_offline=False,
-        refresh=True
+        data_dir=test_data_dir, save_data=True, dev_offline=False, refresh=True
     )
     bad_boy_stats.generate_crime_categories_json()
 
-    print("Player Bad Boy crime for {0}: {1}".format(
-        player_full_name,
-        bad_boy_stats.get_player_bad_boy_crime(player_full_name, player_team_abbr, player_position)
-    ))
-    print("Player Bad Boy points for {0}: {1}".format(
-        player_full_name,
-        bad_boy_stats.get_player_bad_boy_points(player_full_name, player_team_abbr, player_position)
-    ))
+    print(
+        "Player Bad Boy crime for {0}: {1}".format(
+            player_full_name,
+            bad_boy_stats.get_player_bad_boy_crime(
+                player_full_name, player_team_abbr, player_position
+            ),
+        )
+    )
+    print(
+        "Player Bad Boy points for {0}: {1}".format(
+            player_full_name,
+            bad_boy_stats.get_player_bad_boy_points(
+                player_full_name, player_team_abbr, player_position
+            ),
+        )
+    )
 
     assert bad_boy_stats.bad_boy_data is not None
 
 
 def test_beef_init():
     beef_stats = BeefStats(
-        data_dir=test_data_dir,
-        save_data=True,
-        dev_offline=False,
-        refresh=True
+        data_dir=test_data_dir, save_data=True, dev_offline=False, refresh=True
     )
     beef_stats.generate_player_info_json()
 
-    print("Player weight for {0}: {1}".format(
-        player_full_name,
-        beef_stats.get_player_weight(player_first_name, player_last_name, player_team_abbr)
-    ))
-    print("Player TABBU for {0}: {1}".format(
-        player_full_name,
-        beef_stats.get_player_tabbu(player_first_name, player_last_name, player_team_abbr)
-    ))
+    print(
+        "Player weight for {0}: {1}".format(
+            player_full_name,
+            beef_stats.get_player_weight(
+                player_first_name, player_last_name, player_team_abbr
+            ),
+        )
+    )
+    print(
+        "Player TABBU for {0}: {1}".format(
+            player_full_name,
+            beef_stats.get_player_tabbu(
+                player_first_name, player_last_name, player_team_abbr
+            ),
+        )
+    )
 
     assert beef_stats.beef_data is not None
 
@@ -76,14 +88,18 @@ def test_covid_init():
         week=1,
         save_data=True,
         dev_offline=False,
-        refresh=True
+        refresh=True,
     )
     covid_risk.generate_covid_risk_json()
 
-    print("COVID-19 risk for {0}: {1}".format(
-        player_full_name,
-        covid_risk.get_player_covid_risk(player_full_name, player_team_abbr, player_position)
-    ))
+    print(
+        "COVID-19 risk for {0}: {1}".format(
+            player_full_name,
+            covid_risk.get_player_covid_risk(
+                player_full_name, player_team_abbr, player_position
+            ),
+        )
+    )
 
     assert covid_risk.covid_data is not None
 

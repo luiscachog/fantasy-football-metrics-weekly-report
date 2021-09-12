@@ -14,6 +14,7 @@ import pkg_resources
 from pkg_resources import DistributionNotFound, VersionConflict
 
 from integrations.drive_integration import GoogleDriveUploader
+
 # from integrations.slack_integration import SlackMessenger
 from report.builder import FantasyFootballReport
 from report.logger import get_logger
@@ -25,10 +26,19 @@ logger = get_logger()
 
 
 def main(argv):
-    logger.debug("Running fantasy football metrics weekly report app with arguments:\n{0}".format(argv))
+    logger.debug(
+        "Running fantasy football metrics weekly report app with arguments:\n{0}".format(
+            argv
+        )
+    )
 
     dependencies = []
-    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "requirements.txt"), "r") as reqs:
+    with open(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "requirements.txt"
+        ),
+        "r",
+    ) as reqs:
         for line in reqs.readlines():
             if not line.startswith("#"):
                 dependencies.append(line.strip())
@@ -39,51 +49,63 @@ def main(argv):
             pkg_resources.require(dependency)
         except DistributionNotFound as dnfe:
             missing_dependency_count += 1
-            logger.error("Error: {0}\n{1}".format(dnfe, traceback.format_exc()))
+            logger.error(
+                "Error: {0}\n{1}".format(dnfe, traceback.format_exc())
+            )
             logger.error(
                 "MISSING DEPENDENCY: {0}. Please run `pip install {1}` and retry the report generation.".format(
-                    dependency, re.split("\\W+", dependency)[0]))
+                    dependency, re.split("\\W+", dependency)[0]
+                )
+            )
         except VersionConflict as vce:
             missing_dependency_count += 1
             logger.error("Error: {0}\n{1}".format(vce, traceback.format_exc()))
             logger.error(
                 "MISSING DEPENDENCY: {0}. Please run `pip install {1}` and retry the report generation.".format(
-                    dependency, dependency))
+                    dependency, dependency
+                )
+            )
 
     if missing_dependency_count > 0:
         logger.error(
-            "MISSING {0} ".format(str(missing_dependency_count)) + (
-                "DEPENDENCY" if missing_dependency_count == 1 else "DEPENDENCIES"))
+            "MISSING {0} ".format(str(missing_dependency_count))
+            + (
+                "DEPENDENCY"
+                if missing_dependency_count == 1
+                else "DEPENDENCIES"
+            )
+        )
         sys.exit("...run aborted.")
 
-    usage_str = \
-        "\n" \
-        "Fantasy Football Report application usage:\n" \
-        "\n" \
-        "    python main.py [optional_parameters]\n" \
-        "\n" \
-        "  Options:\n" \
-        "      -h, --help                            Print command line usage message.\n" \
-        "      -a, --auto-run                        Automatically run the report using the default week.\n" \
-        "\n" \
-        "    Generate report:\n" \
-        "      -f, --fantasy-platform <platform>     Fantasy football platform on which league for report is hosted. Currently supports: \"yahoo\", \"fleaflicker\" \n" \
-        "      -l, --league-id <league_id>           Fantasy Football league ID.\n" \
-        "      -w, --week <chosen_week>              Chosen week for which to generate report.\n" \
-        "      -g, --game-id <chosen_game_id>        Chosen fantasy game id for which to generate report. Defaults to \"nfl\", which is interpreted as the current season if using Yahoo.\n" \
-        "      -y, --year <chosen_year>              Chosen year (season) of the league for which a report is being generated.\n" \
-        "\n" \
-        "    Configuration:\n" \
-        "      -c, --config-file <config_file_path>  System file path (including file name) for .ini file to be used for configuration.\n" \
-        "      -s, --save-data                       Save all retrieved data locally for faster future report generation.\n" \
-        "      -r, --refresh-web-data                Refresh all web data from external APIs (such as bad boy and beef data).\n" \
-        "      -p, --playoff-prob-sims               Number of Monte Carlo playoff probability simulations to run.\n" \
-        "      -b, --break-ties                      Break ties in metric rankings.\n" \
-        "      -q, --disqualify-ce                   Automatically disqualify teams ineligible for coaching efficiency metric.\n" \
-        "\n" \
-        "    For Developers:\n" \
-        "      -d, --dev-offline                     Run OFFLINE for development. Must have previously run report with -s option.\n" \
+    usage_str = (
+        "\n"
+        "Fantasy Football Report application usage:\n"
+        "\n"
+        "    python main.py [optional_parameters]\n"
+        "\n"
+        "  Options:\n"
+        "      -h, --help                            Print command line usage message.\n"
+        "      -a, --auto-run                        Automatically run the report using the default week.\n"
+        "\n"
+        "    Generate report:\n"
+        '      -f, --fantasy-platform <platform>     Fantasy football platform on which league for report is hosted. Currently supports: "yahoo", "fleaflicker" \n'
+        "      -l, --league-id <league_id>           Fantasy Football league ID.\n"
+        "      -w, --week <chosen_week>              Chosen week for which to generate report.\n"
+        '      -g, --game-id <chosen_game_id>        Chosen fantasy game id for which to generate report. Defaults to "nfl", which is interpreted as the current season if using Yahoo.\n'
+        "      -y, --year <chosen_year>              Chosen year (season) of the league for which a report is being generated.\n"
+        "\n"
+        "    Configuration:\n"
+        "      -c, --config-file <config_file_path>  System file path (including file name) for .ini file to be used for configuration.\n"
+        "      -s, --save-data                       Save all retrieved data locally for faster future report generation.\n"
+        "      -r, --refresh-web-data                Refresh all web data from external APIs (such as bad boy and beef data).\n"
+        "      -p, --playoff-prob-sims               Number of Monte Carlo playoff probability simulations to run.\n"
+        "      -b, --break-ties                      Break ties in metric rankings.\n"
+        "      -q, --disqualify-ce                   Automatically disqualify teams ineligible for coaching efficiency metric.\n"
+        "\n"
+        "    For Developers:\n"
+        "      -d, --dev-offline                     Run OFFLINE for development. Must have previously run report with -s option.\n"
         "      -t, --test                            Generate TEST report.\n"
+    )
 
     try:
         opts, args = getopt.getopt(argv, "hac:f:l:w:g:y:srp:bqtd")
@@ -141,13 +163,28 @@ def main(argv):
     return options_dict
 
 
-def select_league(auto_run, week, platform, league_id, game_id, season, refresh_web_data, playoff_prob_sims, break_ties, dq_ce,
-                  save_data, dev_offline, test):
+def select_league(
+    auto_run,
+    week,
+    platform,
+    league_id,
+    game_id,
+    season,
+    refresh_web_data,
+    playoff_prob_sims,
+    break_ties,
+    dq_ce,
+    save_data,
+    dev_offline,
+    test,
+):
     if not league_id:
         time.sleep(0.25)
-        default = input("{0}Generate report for default league? ({1}y{0}/{2}n{0}) -> {3}".format(
-            Fore.YELLOW, Fore.GREEN, Fore.RED, Style.RESET_ALL
-        ))
+        default = input(
+            "{0}Generate report for default league? ({1}y{0}/{2}n{0}) -> {3}".format(
+                Fore.YELLOW, Fore.GREEN, Fore.RED, Style.RESET_ALL
+            )
+        )
     else:
         default = "selected"
 
@@ -158,23 +195,26 @@ def select_league(auto_run, week, platform, league_id, game_id, season, refresh_
         else:
             week_for_report = week
 
-        return FantasyFootballReport(week_for_report=week_for_report,
-                                     platform=platform,
-                                     game_id=game_id,
-                                     season=season,
-                                     config=config,
-                                     refresh_web_data=refresh_web_data,
-                                     playoff_prob_sims=playoff_prob_sims,
-                                     break_ties=break_ties,
-                                     dq_ce=dq_ce,
-                                     save_data=save_data,
-                                     dev_offline=dev_offline,
-                                     test=test)
+        return FantasyFootballReport(
+            week_for_report=week_for_report,
+            platform=platform,
+            game_id=game_id,
+            season=season,
+            config=config,
+            refresh_web_data=refresh_web_data,
+            playoff_prob_sims=playoff_prob_sims,
+            break_ties=break_ties,
+            dq_ce=dq_ce,
+            save_data=save_data,
+            dev_offline=dev_offline,
+            test=test,
+        )
     elif default == "n":
         league_id = input(
             "{0}What is the league ID of the league for which you want to generate a report? -> {3}".format(
                 Fore.YELLOW, Fore.GREEN, Fore.RED, Style.RESET_ALL
-            ))
+            )
+        )
 
         if not week:
             week_for_report = select_week(auto_run)
@@ -182,23 +222,38 @@ def select_league(auto_run, week, platform, league_id, game_id, season, refresh_
             week_for_report = week
 
         try:
-            return FantasyFootballReport(week_for_report=week_for_report,
-                                         platform=platform,
-                                         league_id=league_id,
-                                         game_id=game_id,
-                                         season=season,
-                                         config=config,
-                                         refresh_web_data=refresh_web_data,
-                                         playoff_prob_sims=playoff_prob_sims,
-                                         break_ties=break_ties,
-                                         dq_ce=dq_ce,
-                                         save_data=save_data,
-                                         dev_offline=dev_offline,
-                                         test=test)
+            return FantasyFootballReport(
+                week_for_report=week_for_report,
+                platform=platform,
+                league_id=league_id,
+                game_id=game_id,
+                season=season,
+                config=config,
+                refresh_web_data=refresh_web_data,
+                playoff_prob_sims=playoff_prob_sims,
+                break_ties=break_ties,
+                dq_ce=dq_ce,
+                save_data=save_data,
+                dev_offline=dev_offline,
+                test=test,
+            )
         except IndexError:
             logger.error("The league ID you have selected is not valid.")
-            select_league(auto_run, week, platform, None, game_id, season, refresh_web_data, playoff_prob_sims, break_ties, dq_ce,
-                          save_data, dev_offline, test)
+            select_league(
+                auto_run,
+                week,
+                platform,
+                None,
+                game_id,
+                season,
+                refresh_web_data,
+                playoff_prob_sims,
+                break_ties,
+                dq_ce,
+                save_data,
+                dev_offline,
+                test,
+            )
     elif default == "selected":
 
         if not week:
@@ -206,50 +261,73 @@ def select_league(auto_run, week, platform, league_id, game_id, season, refresh_
         else:
             week_for_report = week
 
-        return FantasyFootballReport(week_for_report=week_for_report,
-                                     platform=platform,
-                                     league_id=league_id,
-                                     game_id=game_id,
-                                     season=season,
-                                     config=config,
-                                     refresh_web_data=refresh_web_data,
-                                     playoff_prob_sims=playoff_prob_sims,
-                                     break_ties=break_ties,
-                                     dq_ce=dq_ce,
-                                     save_data=save_data,
-                                     dev_offline=dev_offline,
-                                     test=test)
+        return FantasyFootballReport(
+            week_for_report=week_for_report,
+            platform=platform,
+            league_id=league_id,
+            game_id=game_id,
+            season=season,
+            config=config,
+            refresh_web_data=refresh_web_data,
+            playoff_prob_sims=playoff_prob_sims,
+            break_ties=break_ties,
+            dq_ce=dq_ce,
+            save_data=save_data,
+            dev_offline=dev_offline,
+            test=test,
+        )
     else:
-        logger.warning("You must select either \"y\" or \"n\".")
+        logger.warning('You must select either "y" or "n".')
         time.sleep(0.25)
-        select_league(auto_run, week, platform, None, game_id, season, refresh_web_data, playoff_prob_sims, break_ties, dq_ce,
-                      save_data, dev_offline, test)
+        select_league(
+            auto_run,
+            week,
+            platform,
+            None,
+            game_id,
+            season,
+            refresh_web_data,
+            playoff_prob_sims,
+            break_ties,
+            dq_ce,
+            save_data,
+            dev_offline,
+            test,
+        )
 
 
 def select_week(auto_run=False):
     if not auto_run:
         time.sleep(0.25)
-        default = input("{0}Generate report for default week? ({1}y{0}/{2}n{0}) -> {3}".format(
-            Fore.YELLOW, Fore.GREEN, Fore.RED, Style.RESET_ALL
-        ))
+        default = input(
+            "{0}Generate report for default week? ({1}y{0}/{2}n{0}) -> {3}".format(
+                Fore.YELLOW, Fore.GREEN, Fore.RED, Style.RESET_ALL
+            )
+        )
     else:
-        logger.info("Auto-run is set to \"true\". Automatically running the report for the default (most recent) week.")
+        logger.info(
+            'Auto-run is set to "true". Automatically running the report for the default (most recent) week.'
+        )
         default = "y"
 
     if default == "y":
         return None
     elif default == "n":
-        chosen_week = input("{0}For which week would you like to generate a report? ({1}1{0} - {1}17{0}) -> {3}".format(
-            Fore.YELLOW, Fore.GREEN, Fore.RED, Style.RESET_ALL
-        ))
+        chosen_week = input(
+            "{0}For which week would you like to generate a report? ({1}1{0} - {1}17{0}) -> {3}".format(
+                Fore.YELLOW, Fore.GREEN, Fore.RED, Style.RESET_ALL
+            )
+        )
         if 0 < int(chosen_week) < 18:
             return chosen_week
         else:
-            logger.warning("Please select a valid week number between 1 and 17.")
+            logger.warning(
+                "Please select a valid week number between 1 and 17."
+            )
             time.sleep(0.25)
             select_week(auto_run)
     else:
-        logger.warning("You must select either \"y\" or \"n\".")
+        logger.warning('You must select either "y" or "n".')
         time.sleep(0.25)
         select_week(auto_run)
 
@@ -258,7 +336,11 @@ def select_week(auto_run=False):
 if __name__ == "__main__":
 
     options = main(sys.argv[1:])
-    logger.debug("Fantasy football metrics weekly report app run configuration options:\n{0}".format(options))
+    logger.debug(
+        "Fantasy football metrics weekly report app run configuration options:\n{0}".format(
+            options
+        )
+    )
 
     # set local config (check for existence and access, create config.ini if does not exist or stop app if inaccessible)
     if options.get("config_file"):
@@ -282,10 +364,13 @@ if __name__ == "__main__":
         options.get("dq_ce", False),
         options.get("save_data", False),
         options.get("dev_offline", False),
-        options.get("test", False))
+        options.get("test", False),
+    )
     report_pdf = report.create_pdf_report()
 
-    upload_file_to_google_drive = config.getboolean("Drive", "google_drive_upload")
+    upload_file_to_google_drive = config.getboolean(
+        "Drive", "google_drive_upload"
+    )
     upload_message = ""
     if upload_file_to_google_drive:
         if not options.get("test", False):
@@ -293,11 +378,16 @@ if __name__ == "__main__":
             google_drive_uploader = GoogleDriveUploader(report_pdf, config)
             upload_message = google_drive_uploader.upload_file()
             logger.info(upload_message)
-            upload_message_file_path = os.path.join(config.get("Configuration", "data_dir"), "gdrive_message.txt")
+            upload_message_file_path = os.path.join(
+                config.get("Configuration", "data_dir"), "gdrive_message.txt"
+            )
             logger.info(upload_message_file_path)
-            with open( upload_message_file_path, 'w') as f:
+            with open(upload_message_file_path, "w") as f:
                 f.write(upload_message)
-                logger.info("GDrive Message file was created: " + upload_message_file_path)
+                logger.info(
+                    "GDrive Message file was created: "
+                    + upload_message_file_path
+                )
 
         else:
             logger.info("Test report NOT uploaded to Google Drive.")
@@ -325,5 +415,5 @@ if __name__ == "__main__":
     #         else:
     #             logger.error("Report {0} was NOT posted to Slack with error: {1}".format(
     #                 report_pdf, slack_response.get("error")))
-        # else:
-        #     logger.info("Test report NOT posted to Slack.")
+    # else:
+    #     logger.info("Test report NOT posted to Slack.")

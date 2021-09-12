@@ -23,16 +23,17 @@ def complex_json_handler(obj):
         try:
             return str(obj, "utf-8")
         except TypeError:
-            raise TypeError("Object of type %s with value of %s is not JSON serializable" % (type(obj), repr(obj)))
+            raise TypeError(
+                "Object of type %s with value of %s is not JSON serializable"
+                % (type(obj), repr(obj))
+            )
 
 
 class FantasyFootballReportObject(object):
-    """Base Fantasy Football Report object.
-    """
+    """Base Fantasy Football Report object."""
 
     def __init__(self):
-        """Instantiate a Yahoo fantasy football object.
-        """
+        """Instantiate a Yahoo fantasy football object."""
 
     def __str__(self):
         return self.to_json()
@@ -45,7 +46,10 @@ class FantasyFootballReportObject(object):
 
         :return: dict with snake case strings of all subclasses of YahooFantasyObject as keys and subclasses as values
         """
-        return {cls.__name__: cls for cls in self.__class__.__mro__[-2].__subclasses__()}
+        return {
+            cls.__name__: cls
+            for cls in self.__class__.__mro__[-2].__subclasses__()
+        }
 
     def clean_data_dict(self):
         """Recursive method to un-type custom class type objects for serialization.
@@ -54,7 +58,11 @@ class FantasyFootballReportObject(object):
         """
         clean_dict = {}
         for k, v in self.__dict__.items():
-            clean_dict[k] = v.clean_data_dict() if type(v) in self.subclass_dict().values() else v
+            clean_dict[k] = (
+                v.clean_data_dict()
+                if type(v) in self.subclass_dict().values()
+                else v
+            )
         return clean_dict
 
     def serialized(self):
@@ -75,12 +83,24 @@ class FantasyFootballReportObject(object):
 
         :return: json string derived from the serializable version of the class object
         """
-        return json.dumps(self.serialized(), indent=2, default=complex_json_handler, ensure_ascii=False)
+        return json.dumps(
+            self.serialized(),
+            indent=2,
+            default=complex_json_handler,
+            ensure_ascii=False,
+        )
 
 
 class BaseLeague(FantasyFootballReportObject):
-
-    def __init__(self, week_for_report, league_id, config, data_dir, save_data=True, dev_offline=False):
+    def __init__(
+        self,
+        week_for_report,
+        league_id,
+        config,
+        data_dir,
+        save_data=True,
+        dev_offline=False,
+    ):
         super().__init__()
 
         # attributes set during instantiation
@@ -134,7 +154,10 @@ class BaseLeague(FantasyFootballReportObject):
         self.player_data_by_week_key = None
 
     def get_player_data_by_week(self, player_id, week=None):
-        return getattr(self.player_data_by_week_function(player_id, week), self.player_data_by_week_key)
+        return getattr(
+            self.player_data_by_week_function(player_id, week),
+            self.player_data_by_week_key,
+        )
 
     def get_custom_weekly_matchups(self, week_for_report):
         """
@@ -173,7 +196,9 @@ class BaseLeague(FantasyFootballReportObject):
         """
 
         matchup_list = []
-        for matchup in self.matchups_by_week.get(str(week_for_report)):  # type: BaseMatchup
+        for matchup in self.matchups_by_week.get(
+            str(week_for_report)
+        ):  # type: BaseMatchup
             if matchup.complete:
                 if matchup.teams[0].points == matchup.teams[1].points:
                     is_tied = matchup.tied
@@ -195,11 +220,19 @@ class BaseLeague(FantasyFootballReportObject):
                 else:
                     opponent = matchup.teams[0]  # type: BaseTeam
                 teams[str(team.team_id)] = {
-                    "result": "T" if is_tied else "W" if team.team_id == winning_team else "L",
+                    "result": "T"
+                    if is_tied
+                    else "W"
+                    if team.team_id == winning_team
+                    else "L",
                     "points_for": team.points,
                     "points_against": opponent.points,
-                    "division": True if (
-                            (team.division or team.division == 0) and team.division == opponent.division) else False
+                    "division": True
+                    if (
+                        (team.division or team.division == 0)
+                        and team.division == opponent.division
+                    )
+                    else False,
                 }
 
             matchup_list.append(teams)
@@ -212,40 +245,54 @@ class BaseLeague(FantasyFootballReportObject):
             "FLEX_RB_TE_WR": self.flex_positions_rb_te_wr,
             "FLEX_QB_RB_TE_WR": self.flex_positions_qb_rb_te_wr,
             "FLEX_OFFENSIVE_PLAYER": self.flex_positions_offensive_player,
-            "FLEX_IDP": self.flex_positions_idp
+            "FLEX_IDP": self.flex_positions_idp,
         }
 
-    def get_playoff_probs(self, save_data=False, playoff_prob_sims=None, dev_offline=False, recalculate=True):
+    def get_playoff_probs(
+        self,
+        save_data=False,
+        playoff_prob_sims=None,
+        dev_offline=False,
+        recalculate=True,
+    ):
         # TODO: UPDATE USAGE OF recalculate PARAM (could use self.dev_offline)
         return PlayoffProbabilities(
             self.config,
             playoff_prob_sims,
             self.num_regular_season_weeks,
             self.num_playoff_slots,
-            data_dir=os.path.join(self.data_dir, str(self.season), self.league_id),
+            data_dir=os.path.join(
+                self.data_dir, str(self.season), self.league_id
+            ),
             num_divisions=self.num_divisions,
             save_data=save_data,
             recalculate=recalculate,
-            dev_offline=dev_offline
+            dev_offline=dev_offline,
         )
 
-    def get_bad_boy_stats(self, save_data=False, dev_offline=False, refresh=False):
+    def get_bad_boy_stats(
+        self, save_data=False, dev_offline=False, refresh=False
+    ):
         return BadBoyStats(
             os.path.join(self.data_dir, str(self.season), self.league_id),
             save_data=save_data,
             dev_offline=dev_offline,
-            refresh=refresh
+            refresh=refresh,
         )
 
-    def get_beef_stats(self, save_data=False, dev_offline=False, refresh=False):
+    def get_beef_stats(
+        self, save_data=False, dev_offline=False, refresh=False
+    ):
         return BeefStats(
             os.path.join(self.data_dir, str(self.season), self.league_id),
             save_data=save_data,
             dev_offline=dev_offline,
-            refresh=refresh
+            refresh=refresh,
         )
 
-    def get_covid_risk(self, save_data=False, dev_offline=False, refresh=False):
+    def get_covid_risk(
+        self, save_data=False, dev_offline=False, refresh=False
+    ):
         return CovidRisk(
             self.config,
             os.path.join(self.data_dir, str(self.season), self.league_id),
@@ -253,12 +300,11 @@ class BaseLeague(FantasyFootballReportObject):
             week=self.week_for_report,
             save_data=save_data,
             dev_offline=dev_offline,
-            refresh=refresh
+            refresh=refresh,
         )
 
 
 class BaseMatchup(FantasyFootballReportObject):
-
     def __init__(self):
         super().__init__()
 
@@ -272,7 +318,9 @@ class BaseMatchup(FantasyFootballReportObject):
 
     def __setattr__(self, key, value):
         if key == "complete" and not isinstance(value, bool):
-            raise ValueError("Matchup completion status can only be \"True\" or \"False\"!")
+            raise ValueError(
+                'Matchup completion status can only be "True" or "False"!'
+            )
         if key == "tied" and value:
             self.winner = None
             self.loser = None
@@ -280,7 +328,6 @@ class BaseMatchup(FantasyFootballReportObject):
 
 
 class BaseTeam(FantasyFootballReportObject):
-
     def __init__(self):
         super().__init__()
 
@@ -335,21 +382,44 @@ class BaseTeam(FantasyFootballReportObject):
         self._combined_record = BaseRecord(
             team_id=self.team_id,
             team_name=self.name,
-            wins=self.record.get_wins() + self.current_median_record.get_wins(),
-            losses=self.record.get_losses() + self.current_median_record.get_losses(),
-            ties=self.record.get_ties() + self.current_median_record.get_ties()
+            wins=self.record.get_wins()
+            + self.current_median_record.get_wins(),
+            losses=self.record.get_losses()
+            + self.current_median_record.get_losses(),
+            ties=self.record.get_ties()
+            + self.current_median_record.get_ties(),
         )
 
         return self._combined_record
 
 
 class BaseRecord(FantasyFootballReportObject):
-
-    def __init__(self, week=0, wins=0, ties=0, losses=0, percentage=0, points_for=0, points_against=0,
-                 streak_type=None, streak_len=0, team_id=None, team_name=None, rank=None, division=None,
-                 division_wins=0, division_ties=0, division_losses=0, division_percentage=0, division_points_for=0,
-                 division_points_against=0, division_streak_type=None, division_streak_len=None, division_rank=None,
-                 division_opponents_dict=None):
+    def __init__(
+        self,
+        week=0,
+        wins=0,
+        ties=0,
+        losses=0,
+        percentage=0,
+        points_for=0,
+        points_against=0,
+        streak_type=None,
+        streak_len=0,
+        team_id=None,
+        team_name=None,
+        rank=None,
+        division=None,
+        division_wins=0,
+        division_ties=0,
+        division_losses=0,
+        division_percentage=0,
+        division_points_for=0,
+        division_points_against=0,
+        division_streak_type=None,
+        division_streak_len=None,
+        division_rank=None,
+        division_opponents_dict=None,
+    ):
         """Custom team record object.
 
         :param week: week if record_type is "weekly"
@@ -373,10 +443,19 @@ class BaseRecord(FantasyFootballReportObject):
         self._streak_type = streak_type
         self._streak_len = streak_len
         self.rank = rank
-        self._percentage = percentage if percentage else self._calculate_percentage(
-            self._wins, self._ties, self._losses)
-        self._record_str = self._format_record(self._wins, self._ties, self._losses)
-        self._record_and_pf_str = self._format_record(self._wins, self._ties, self._losses, self._points_for)
+        self._percentage = (
+            percentage
+            if percentage
+            else self._calculate_percentage(
+                self._wins, self._ties, self._losses
+            )
+        )
+        self._record_str = self._format_record(
+            self._wins, self._ties, self._losses
+        )
+        self._record_and_pf_str = self._format_record(
+            self._wins, self._ties, self._losses, self._points_for
+        )
 
         self.division = division
         self._division_wins = division_wins
@@ -387,17 +466,27 @@ class BaseRecord(FantasyFootballReportObject):
         self._division_streak_type = division_streak_type
         self._division_streak_len = division_streak_len
         self.division_rank = division_rank
-        self._division_percentage = division_percentage if division_percentage else self._calculate_percentage(
-            self._division_wins, self._division_ties, self._division_losses)
+        self._division_percentage = (
+            division_percentage
+            if division_percentage
+            else self._calculate_percentage(
+                self._division_wins, self._division_ties, self._division_losses
+            )
+        )
         self._division_record_str = self._format_record(
-            self._division_wins, self._division_ties, self._division_losses, self._division_points_for)
+            self._division_wins,
+            self._division_ties,
+            self._division_losses,
+            self._division_points_for,
+        )
         self._division_opponents_dict = division_opponents_dict
 
     def __setattr__(self, key, value):
         if key == "week":
             if self._record_type == "overall":
                 raise ValueError(
-                    "BaseRecord.week attribute cannot be assigned when BaseRecord.record_type = \"overall\".")
+                    'BaseRecord.week attribute cannot be assigned when BaseRecord.record_type = "overall".'
+                )
 
         self.__dict__[key] = value
 
@@ -412,16 +501,22 @@ class BaseRecord(FantasyFootballReportObject):
 
     def _format_record(self, wins, ties, losses, points_for=None):
         if points_for:
-            return self._format_record_with_points_for(wins, ties, losses, points_for)
+            return self._format_record_with_points_for(
+                wins, ties, losses, points_for
+            )
         else:
             return self._format_record_without_points_for(wins, ties, losses)
 
     @staticmethod
     def _format_record_with_points_for(wins, ties, losses, points_for):
         if ties > 0:
-            record_str = "{0}-{1}-{2} ({3})".format(wins, losses, ties, round(points_for, 2))
+            record_str = "{0}-{1}-{2} ({3})".format(
+                wins, losses, ties, round(points_for, 2)
+            )
         else:
-            record_str = "{0}-{1} ({2})".format(wins, losses, round(points_for, 2))
+            record_str = "{0}-{1} ({2})".format(
+                wins, losses, round(points_for, 2)
+            )
         return record_str
 
     @staticmethod
@@ -444,9 +539,15 @@ class BaseRecord(FantasyFootballReportObject):
 
     def add_win(self, wins=1):
         self._wins += wins
-        self._percentage = self._calculate_percentage(self._wins, self._ties, self._losses)
-        self._record_str = self._format_record(self._wins, self._ties, self._losses)
-        self._record_and_pf_str = self._format_record(self._wins, self._ties, self._losses, self._points_for)
+        self._percentage = self._calculate_percentage(
+            self._wins, self._ties, self._losses
+        )
+        self._record_str = self._format_record(
+            self._wins, self._ties, self._losses
+        )
+        self._record_and_pf_str = self._format_record(
+            self._wins, self._ties, self._losses, self._points_for
+        )
         self._update_streak("W")
 
     def get_losses(self):
@@ -454,9 +555,15 @@ class BaseRecord(FantasyFootballReportObject):
 
     def add_loss(self, losses=1):
         self._losses += losses
-        self._percentage = self._calculate_percentage(self._wins, self._ties, self._losses)
-        self._record_str = self._format_record(self._wins, self._ties, self._losses)
-        self._record_and_pf_str = self._format_record(self._wins, self._ties, self._losses, self._points_for)
+        self._percentage = self._calculate_percentage(
+            self._wins, self._ties, self._losses
+        )
+        self._record_str = self._format_record(
+            self._wins, self._ties, self._losses
+        )
+        self._record_and_pf_str = self._format_record(
+            self._wins, self._ties, self._losses, self._points_for
+        )
         self._update_streak("L")
 
     def get_ties(self):
@@ -464,9 +571,15 @@ class BaseRecord(FantasyFootballReportObject):
 
     def add_tie(self, ties=1):
         self._ties += ties
-        self._percentage = self._calculate_percentage(self._wins, self._ties, self._losses)
-        self._record_str = self._format_record(self._wins, self._ties, self._losses)
-        self._record_and_pf_str = self._format_record(self._wins, self._ties, self._losses, self._points_for)
+        self._percentage = self._calculate_percentage(
+            self._wins, self._ties, self._losses
+        )
+        self._record_str = self._format_record(
+            self._wins, self._ties, self._losses
+        )
+        self._record_and_pf_str = self._format_record(
+            self._wins, self._ties, self._losses, self._points_for
+        )
         self._update_streak("T")
 
     def get_points_for(self):
@@ -474,8 +587,12 @@ class BaseRecord(FantasyFootballReportObject):
 
     def add_points_for(self, points):
         self._points_for += points
-        self._record_str = self._format_record(self._wins, self._ties, self._losses)
-        self._record_and_pf_str = self._format_record(self._wins, self._ties, self._losses, self._points_for)
+        self._record_str = self._format_record(
+            self._wins, self._ties, self._losses
+        )
+        self._record_and_pf_str = self._format_record(
+            self._wins, self._ties, self._losses, self._points_for
+        )
 
     def get_points_against(self):
         return self._points_against
@@ -514,11 +631,17 @@ class BaseRecord(FantasyFootballReportObject):
     def add_division_win(self):
         self._division_wins += 1
         self._division_percentage = self._calculate_percentage(
-            self._division_wins, self._division_ties, self._division_losses)
+            self._division_wins, self._division_ties, self._division_losses
+        )
         self._record_str = self._format_record(
-            self._division_wins, self._division_ties, self._division_losses)
+            self._division_wins, self._division_ties, self._division_losses
+        )
         self._record_and_pf_str = self._format_record(
-            self._division_wins, self._division_ties, self._division_losses, self._division_points_for)
+            self._division_wins,
+            self._division_ties,
+            self._division_losses,
+            self._division_points_for,
+        )
         self._update_division_streak("W")
 
     def get_division_losses(self):
@@ -527,11 +650,17 @@ class BaseRecord(FantasyFootballReportObject):
     def add_division_loss(self):
         self._division_losses += 1
         self._division_percentage = self._calculate_percentage(
-            self._division_wins, self._division_ties, self._division_losses)
+            self._division_wins, self._division_ties, self._division_losses
+        )
         self._record_str = self._format_record(
-            self._division_wins, self._division_ties, self._division_losses)
+            self._division_wins, self._division_ties, self._division_losses
+        )
         self._record_and_pf_str = self._format_record(
-            self._division_wins, self._division_ties, self._division_losses, self._division_points_for)
+            self._division_wins,
+            self._division_ties,
+            self._division_losses,
+            self._division_points_for,
+        )
         self._update_division_streak("L")
 
     def get_division_ties(self):
@@ -540,11 +669,17 @@ class BaseRecord(FantasyFootballReportObject):
     def add_division_tie(self):
         self._division_ties += 1
         self._division_percentage = self._calculate_percentage(
-            self._division_wins, self._division_ties, self._division_losses)
+            self._division_wins, self._division_ties, self._division_losses
+        )
         self._record_str = self._format_record(
-            self._division_wins, self._division_ties, self._division_losses)
+            self._division_wins, self._division_ties, self._division_losses
+        )
         self._record_and_pf_str = self._format_record(
-            self._division_wins, self._division_ties, self._division_losses, self._division_points_for)
+            self._division_wins,
+            self._division_ties,
+            self._division_losses,
+            self._division_points_for,
+        )
         self._update_division_streak("T")
 
     def get_division_points_for(self):
@@ -553,7 +688,11 @@ class BaseRecord(FantasyFootballReportObject):
     def add_division_points_for(self, points):
         self._division_points_for += points
         self._division_record_str = self._format_record(
-            self._division_wins, self._division_ties, self._division_losses, self._division_points_for)
+            self._division_wins,
+            self._division_ties,
+            self._division_losses,
+            self._division_points_for,
+        )
 
     def get_division_points_against(self):
         return self._division_points_against
@@ -574,11 +713,12 @@ class BaseRecord(FantasyFootballReportObject):
         return self._division_streak_len
 
     def get_division_streak_str(self):
-        return "{0}-{1}".format(self._division_streak_type, self._division_streak_len)
+        return "{0}-{1}".format(
+            self._division_streak_type, self._division_streak_len
+        )
 
 
 class BaseManager(FantasyFootballReportObject):
-
     def __init__(self):
         super().__init__()
 
@@ -598,7 +738,6 @@ class BaseManager(FantasyFootballReportObject):
 
 
 class BasePlayer(FantasyFootballReportObject):
-
     def __init__(self):
         super().__init__()
 
@@ -639,7 +778,6 @@ class BasePlayer(FantasyFootballReportObject):
 
 
 class BaseStat(FantasyFootballReportObject):
-
     def __init__(self):
         super().__init__()
 

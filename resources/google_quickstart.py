@@ -17,7 +17,11 @@ def main():
     Prints the names and ids of the first 10 files the user has access to.
     """
 
-    google_auth_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "auth", "google")
+    google_auth_dir = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        "auth",
+        "google",
+    )
     if not os.path.exists(google_auth_dir):
         os.makedirs(google_auth_dir)
     token_file_path = os.path.join(google_auth_dir, "token.json")
@@ -25,13 +29,18 @@ def main():
     store = file.Storage(token_file_path)
     creds = store.get()
     if not creds or creds.invalid:
-        flow = client.flow_from_clientsecrets(os.path.join(google_auth_dir, "credentials.json"), SCOPES)
+        flow = client.flow_from_clientsecrets(
+            os.path.join(google_auth_dir, "credentials.json"), SCOPES
+        )
         creds = tools.run_flow(flow, store)
     service = build("drive", "v3", http=creds.authorize(Http()))
 
     # Call the Drive v3 API
-    results = service.files().list(
-        pageSize=10, fields="nextPageToken, files(id, name)").execute()
+    results = (
+        service.files()
+        .list(pageSize=10, fields="nextPageToken, files(id, name)")
+        .execute()
+    )
     items = results.get("files", [])
 
     if not items:
